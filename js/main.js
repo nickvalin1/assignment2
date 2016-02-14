@@ -1,18 +1,20 @@
-var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update });
+var game = new Phaser.Game(800, 640, Phaser.AUTO, 'game', { preload: preload, create: create, update: update });
 
 function preload() {
-    game.load.image('sky', 'assets/background.jpg');
-    game.load.image('ground', 'assets/platform.png');
+    game.load.tilemap('map', 'assets/map2.json', null, Phaser.Tilemap.TILED_JSON);
+    game.load.image('tiles', 'assets/tiles/tiles.png');
+    game.load.image('bg', 'assets/background.jpg');
     game.load.image('bubble', 'assets/bubble.png');
     game.load.spritesheet('dude', 'assets/dude.png', 32, 32);
     game.load.image('block', 'assets/block.png');
     game.load.image('spring', 'assets/spring_burned.png');
-    game.load.audio('sfx', 'assets/sfx.mp3');
+    game.load.audio('sfx', 'assets/sfx.wav');
     game.load.audio('music', 'assets/music.wav');
 }
 var music;
 var background;
-var platforms;
+var map;
+var layer;
 var player;
 var bubbles;
 var score=12;
@@ -29,26 +31,18 @@ function create() {
     
     fx=game.add.audio('sfx');
     fx.allowMultiple=true;
-    fx.addMarker('jump', 0, .36,.25);
-    fx.addMarker('bubble', .5, .26,.25);
-    fx.addMarker('spring', .8, .44,.25);
+    fx.addMarker('jump', 0, .32,.25);
+    fx.addMarker('walk', .5, .7,.5);
+    fx.addMarker('collect', 1.5, .2,1);
     
-    var background=game.add.sprite(0,0, 'sky');
-    background.scale.setTo(.2,.2);
+    background=game.add.sprite(0,0, 'bg');
+    background.scale.setTo(.5,.5);
     
-    platforms=game.add.group();
-    platforms.enableBody=true;
-    var ground=platforms.create(0, game.world.height-64, 'ground');
-    ground.scale.setTo(2,2);
-    ground.body.immovable=true;
-    
-    var ledge=platforms.create(400,350,'ground');
-    ledge.body.immovable=true;
-    ledge=platforms.create(-150,150,'ground');
-    ledge.body.immovable=true;
-    ledge=platforms.create(-275,380,'ground');
-    ledge.body.immovable=true;
-    
+    map=game.add.tilemap('map');
+    map.addTilesetImage('tiles');
+    map.setCollisionByExclusion([0,24,29]);
+    layer=map.createLayer('Tile Layer 1');
+    layer.resizeWorld();
     
     player=game.add.sprite(32, game.world.height-150, 'dude');
     game.physics.arcade.enable(player);
@@ -61,12 +55,10 @@ function create() {
     
     bubbles=game.add.group();
     bubbles.enableBody=true;
-    for (var i=0; i<12; i++) {
-        var bubble=bubbles.create(i*70, 0, 'bubble');
-        bubble.scale.setTo(.1,.1);
-        bubble.body.gravity.y=100;
-        bubble.body.bounce.y=.7+Math.random()*.2;
-    }
+    makeBubble(700,504);
+    makeBubble(0,348);
+    makeBubble(650, 318);
+    makeBubble(15, 118);
     
     blocks=game.add.physicsGroup();
     blocks.enableBody=true;
@@ -86,8 +78,17 @@ function create() {
     cursors=game.input.keyboard.createCursorKeys();
     restart=game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR); 
     
+    game.camera.follow(player);
+    
 }
     
+function makeBubble(x,y){
+    var bubble=bubbles.create(x,y,'bubble');
+    bubble.scale.setTo(.1,.1);
+    bubble.body.gravity.y=-1;
+    bubble.body.collideWorldBounds=true;
+}
+
 function addBounds(block){
     block.body.collideWorldBounds=true;
     block.body.gravity.y=600;
@@ -95,7 +96,7 @@ function addBounds(block){
 
 function collectBubble(player, bubble) {
     bubble.kill();
-    fx.play('bubble');
+    fx.play('collect');
     score-=1;
     if (score==0){
         scoreText.text='Bubbles Left: '+score+'  Mission Complete!';
@@ -111,19 +112,19 @@ function changeVelocity(block){
     
 function collisionHandler(){
     if (!(player.body.touching.left||player.body.touching.right)){
-        fx.play('spring');
+        fx.play('jump');
         player.body.velocity.y=-475;
     }
 }
 
 function update() {
-    game.physics.arcade.collide(player,platforms);
-    game.physics.arcade.collide(bubbles, platforms);
+    game.physics.arcade.collide(layer, player);
+    game.physics.arcade.collide(layer, blocks);
+    game.physics.arcade.collide(layer, bubbles);
+    game.physics.arcade.collide(layer, spring);
     game.physics.arcade.collide(player,blocks);
-    game.physics.arcade.collide(blocks, platforms);
     game.physics.arcade.collide(blocks,blocks);
     game.physics.arcade.collide(spring, player, collisionHandler);
-    game.physics.arcade.collide(spring, platforms);
     game.physics.arcade.collide(spring, blocks);
     game.physics.arcade.overlap(player, bubbles, collectBubble, null, this);
     player.body.velocity.x=0;
@@ -151,12 +152,16 @@ function update() {
         player.animations.stop();
         player.frame=1;
     }
-    if (cursors.up.isDown && player.body.touching.down) {
+    if (player.body.velocity.x!=0&&player.body.onFloor()&&(!fx.isPlaying)){
+        fx.play('walk');
+    }
+    if (cursors.up.isDown && (player.body.onFloor()||player.body.touching.down)) {
+        fx.pause('walk');
         fx.play('jump');
         player.body.gravity.y=300;
-        player.body.velocity.y=-275;
+        player.body.velocity.y=-300;
     }
-    if (cursors.down.isDown &&!player.body.touching.down) {
+    if (cursors.down.isDown &&(!player.body.onFloor()||player.body.touching.down)) {
         player.body.gravity.y=600;
     } 
 }
