@@ -120,7 +120,7 @@ function create() {
     oxygenText.fixedToCamera=true;
     game.time.events.loop(Phaser.Timer.SECOND, decreaseOxygen, this);
     
-    introText=game.add.text(50,100,"Your ship has crash landed on the newly discovered \nexoplanet MSP-1 leaving you the only survivor. The US \nCongress funded this mission to collect the valuble \nbubbles that Earth desperately needs found only on \nMSP-1. Collect ten bubbles to bring back to Earch \nbefore finding all three parts to repair your ship and \ncomplete your mission. \nBe careful, the oxygen supply is limited...\n\nPress the space bar to remove text.",{fontSize: '28px', fill:'#ffffff', align: 'center'});
+    introText=game.add.text(50,100,"Your ship has crash landed on the newly discovered \nexoplanet MSP-1 leaving you the only survivor. The US \nCongress funded this mission to collect the valuable \nbubbles that Earth desperately needs found only on \nMSP-1. Collect ten bubbles to bring back to Earth \nbefore finding all three parts to repair your ship and \ncomplete your mission. \nBe careful, the oxygen supply is limited...\n\nPress the space bar to remove text.",{fontSize: '28px', fill:'#ffffff', align: 'center'});
     introText.fixedToCamera=true;
     
     cursors=game.input.keyboard.createCursorKeys();
