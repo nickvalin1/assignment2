@@ -1,88 +1,120 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Hello! Wow! Much Game!</title>
-    <script src="js/phaser.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.min.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/bubbles.js"></script>
+    <script src="js/oxygen.js"></script>
+    <script src="js/parts.js"></script>
+    <script src="js/blocks.js"></script>
 
-<style>
-body
-{
-    color: #777;
-    font-family: "Avenir", Verdana, sans-serif;
-}
-#readme
-{
-    margin-top: 10px;
-}
-</style>
+    <style>
+        body {
+            color: #777;
+            font-family: "Avenir", Verdana, sans-serif;
+        }
+
+        #readme {
+            margin-top: 10px;
+        }
+    </style>
 
 </head>
+
 <body>
-<div id="game"></div>
-<div id="readme">
-<h2>Sole Survivor</h2>
-<ul>
+    <div id="game"></div>
+    <div id="readme">
+        <h2>Sole Survivor</h2>
+        <ul>
 
-<li><strong>High Concept:</strong>
-Traverse the strange landscape of the exoplanet MSP-1 to collect resources for your mission and find parts to repair your ship. As your oxygen supplies get lower, the task will become more difficult. 
-</li>
+            <li><strong>High Concept:</strong>
+                Traverse the strange landscape of the exoplanet MSP-1 to collect resources for your mission and find
+                parts to repair your ship. As your oxygen supplies get lower, the task will become more difficult.
+            </li>
 
-<li><strong>Player Experience Goals:</strong>
-The feelings this game tries to evoke are a strong sense of isolation and the resulting anxiety. These feelings are created through the auditory effects, the music and wind effects, and the visual effects, the starry background and blurring effect as oxygen levels deplete. 
-</li>
+            <li><strong>Player Experience Goals:</strong>
+                The feelings this game tries to evoke are a strong sense of isolation and the resulting anxiety. These
+                feelings are created through the auditory effects, the music and wind effects, and the visual effects,
+                the starry background and blurring effect as oxygen levels deplete.
+            </li>
 
-<li><strong>Genre:</strong>
-Puzzle Game/Survival 
-</li>
+            <li><strong>Genre:</strong>
+                Puzzle Game/Survival
+            </li>
 
-<li><strong>Game play:</strong>
-The player can use the right and left arrow keys to move along the x axis. The up arrow allows the player to jump and the down arrow allows the player to fastfall. By walking against a block, the player may push the object in that direction. Passing through the bubbles, parts, oxygen tanks, and tool collects them. Collecting the tool allows the player to move through certain terrain. Collecting enough bubbles allows the player to jump while in the air. The spacebar resets the position of the blocks and player but not the oxygen level or collectable items.  
-</li>
+            <li><strong>Game play:</strong>
+                The player can use the right and left arrow keys to move along the x axis. The up arrow allows the
+                player to jump and the down arrow allows the player to fastfall. By walking against a block, the player
+                may push the object in that direction. Passing through the bubbles, parts, oxygen tanks, and tool
+                collects them. Collecting the tool allows the player to move through certain terrain. Collecting enough
+                bubbles allows the player to jump while in the air. The spacebar resets the position of the blocks and
+                player but not the oxygen level or collectable items.
+            </li>
 
-<li><strong>Prototype goal:</strong>
-This game is evaluating the player's ability to maneuver through the terrain and collect items within a time limit imposed by the oxygen level dropping.  
-</li>
+            <li><strong>Prototype goal:</strong>
+                This game is evaluating the player's ability to maneuver through the terrain and collect items within a
+                time limit imposed by the oxygen level dropping.
+            </li>
 
-<li><strong>Features:</strong>
-As the oxygen level drops, your vision begins to blur and go gray. Bubbles from MSP-1 have a strong anti-gravity effect and after collecting enough, you can float. Collect the tool at the end of the map to travel through formerly impassible terrain. 
-</li>
+            <li><strong>Features:</strong>
+                As the oxygen level drops, your vision begins to blur and go gray. Bubbles from MSP-1 have a strong
+                anti-gravity effect and after collecting enough, you can float. Collect the tool at the end of the map
+                to travel through formerly impassible terrain.
+            </li>
 
-<li><strong>Setting/Premise:</strong>
-The game follows an astronaut from USA, Earth. He is the first individual to step foot on an exoplanet, the newly discovered planet MSP-1. MSP-1 has a large quantity of a valuable resource that Earth desperately needs, anti-gravity bubbles. As such, the US government poured billions into sending a team to MSP-1 to collect those bubbles, but a ship malfunction left the game's protagonist as the only survivor.      
-</li>
+            <li><strong>Setting/Premise:</strong>
+                The game follows an astronaut from USA, Earth. He is the first individual to step foot on an exoplanet,
+                the newly discovered planet MSP-1. MSP-1 has a large quantity of a valuable resource that Earth
+                desperately needs, anti-gravity bubbles. As such, the US government poured billions into sending a team
+                to MSP-1 to collect those bubbles, but a ship malfunction left the game's protagonist as the only
+                survivor.
+            </li>
 
-<li><strong>Story:</strong>
-The player controls the protagonist as he valiantly attempts to complete his mission and collect the valuable bubbles to bring back to Earth while also finding parts to his ship that scattered in the crash. He encounters obstacles such as extreme heights, rough terrain, and depleting oxygen levels that the player must help him overcome to complete the mission. 
-</li>
+            <li><strong>Story:</strong>
+                The player controls the protagonist as he valiantly attempts to complete his mission and collect the
+                valuable bubbles to bring back to Earth while also finding parts to his ship that scattered in the
+                crash. He encounters obstacles such as extreme heights, rough terrain, and depleting oxygen levels that
+                the player must help him overcome to complete the mission.
+            </li>
 
-<li><strong>Target Audience:</strong>
-The target audience is Jan Allbeck and the students in CS-325. 
-</li>
+            <li><strong>Target Audience:</strong>
+                The target audience is Jan Allbeck and the students in CS-325.
+            </li>
 
-<li><strong>Play time:</strong>
-The player starts with 100 seconds of oxygen and can collect 20 more. 
-</li>
+            <li><strong>Play time:</strong>
+                The player starts with 100 seconds of oxygen and can collect 20 more.
+            </li>
 
-<li><strong>Strategies:</strong>
-The block on the ground will allow the player to jump to the lowest platform. The block on the platform can be used to jump directly to the middle platform by pushing it so that it hangs over the edge. The player should collect every bubble possible while moving as quickly as possible to collect the tool. Once the player has the tool he or she has access to enough bubbles to float, allowing the player to quickly collect the remaining bubbles before collecting the remaining part/s. Collecting the oxygen tanks is worth the slight detour necessary to get them.  
-</li>
+            <li><strong>Strategies:</strong>
+                The block on the ground will allow the player to jump to the lowest platform. The block on the platform
+                can be used to jump directly to the middle platform by pushing it so that it hangs over the edge. The
+                player should collect every bubble possible while moving as quickly as possible to collect the tool.
+                Once the player has the tool he or she has access to enough bubbles to float, allowing the player to
+                quickly collect the remaining bubbles before collecting the remaining part/s. Collecting the oxygen
+                tanks is worth the slight detour necessary to get them.
+            </li>
 
-<li><strong>Prototype Assets:</strong>
-Created in MS Paint: block.png
-Found through google images: dude.png from relaxate.com, background.jpg from wikipedia.org, bubble.png from clker.com, oxygen.png from openclipart.org, and parts.jpg and tool.jpg from worldartsme.com
-sfx.wav and wind.wav collected from soundbible.com
-music.wav is "Distant Strangers" by Whodiniz from freemusicarchive.org
-Tileset from opengameart.org
-Filters from Phaser on github
-</li>
+            <li><strong>Prototype Assets:</strong>
+                Created in MS Paint: block.png
+                Found through google images: dude.png from relaxate.com, background.jpg from wikipedia.org, bubble.png
+                from clker.com, oxygen.png from openclipart.org, and parts.jpg and tool.jpg from worldartsme.com
+                sfx.wav and wind.wav collected from soundbible.com
+                music.wav is "Distant Strangers" by Whodiniz from freemusicarchive.org
+                Tileset from opengameart.org
+                Filters from Phaser on github
+            </li>
 
-<li><strong>Prototype Closest Other Game:</strong>
-This game is a continuation of my digital assignment 1 that most closely resembled the "making your first game" tutorial from Phaser. 
-</li>
+            <li><strong>Prototype Closest Other Game:</strong>
+                This game is a continuation of my digital assignment 1 that most closely resembled the "making your
+                first game" tutorial from Phaser.
+            </li>
 
-</ul>
-</div>
+        </ul>
+    </div>
 </body>
+
 </html>

@@ -1,314 +1,248 @@
-var game = new Phaser.Game(800, 640, Phaser.WEBGL, 'game', { preload: preload, create: create, update: update });
-
-function preload() {
-    game.load.tilemap('map', 'assets/map2.json', null, Phaser.Tilemap.TILED_JSON);
-    game.load.image('tiles', 'assets/tiles/tiles.png');
-    game.load.image('bg', 'assets/background.jpg');
-    game.load.image('bubble', 'assets/bubble.png');
-    game.load.spritesheet('dude', 'assets/dude.png', 32, 32);
-    game.load.image('block', 'assets/block.png');
-    game.load.audio('sfx', 'assets/sfx.wav');
-    game.load.audio('music', 'assets/music.wav');
-    game.load.audio('wind', 'assets/wind.wav');
-    game.load.image('oxygen', 'assets/oxygen.png');
-    game.load.image('parts', 'assets/parts.jpg');
-    game.load.image('tool', 'assets/tool.jpg');
-    game.load.script('filterX', 'https://cdn.rawgit.com/photonstorm/phaser/master/filters/BlurX.js');
-    game.load.script('filterY', 'https://cdn.rawgit.com/photonstorm/phaser/master/filters/BlurY.js');
-    game.load.script('Gray', 'https://cdn.rawgit.com/photonstorm/phaser/master/filters/Gray.js');
-}
-var music;
-var wind;
-var background;
-var map;
-var layer;
-var player;
-var bubbles;
-var oxygen;
-var parts;
-var score=10;
-var partsLeft=3;
-var oxygen_value=100;
-var scoreText;
-var partsText;
-var oxygenText;
-var tool;
-var hasTool=false;
-var blocks;
-var restart;
-var fx;
-var introText;
-var blurX;
-var blurY;
-var gray;
-function create() {
-    game.physics.startSystem(Phaser.Physics.ARCADE);
-    
-    music=game.add.audio('music');
-    music.play();
-    wind=game.add.audio('wind');
-    
-    fx=game.add.audio('sfx');
-    fx.allowMultiple=true;
-    fx.addMarker('jump', 0, .32,.15);
-    fx.addMarker('walk', .5, .7,.25);
-    fx.addMarker('collect', 1.5, .2,1);
-    
-    background=game.add.sprite(0,0, 'bg');
-    background.scale.setTo(.5,.5);
-    
-    map=game.add.tilemap('map');
-    map.addTilesetImage('tiles');
-    map.setCollisionByExclusion([0,24,29]);
-    layer=map.createLayer('Tile Layer 1');
-    layer.resizeWorld();
-    
-    blurX = game.add.filter('BlurX');
-    blurY = game.add.filter('BlurY');
-    gray=game.add.filter('Gray');
-    
-    player=game.add.sprite(32, game.world.height-150, 'dude');
-    game.physics.arcade.enable(player);
-    player.body.bounce.y=.2;
-    player.body.gravity.y=300;
-    player.body.collideWorldBounds=true;
-    player.animations.add('left', [3,4,5], 10, true);
-    player.animations.add('right', [6,7,8], 10, true);
-    player.scale.setTo(1.25,1.25);
-    
-    bubbles=game.add.group();
-    bubbles.enableBody=true;
-    makeBubble(700,504);
-    makeBubble(0,348);
-    makeBubble(650, 318);
-    makeBubble(1088+3,544);
-    makeBubble(1088+3, 288);
-    makeBubble(1152+3, 544);
-    makeBubble(1152+3, 288);
-    makeBubble(2080+3,544);
-    makeBubble(2288+3,288);
-    makeBubble(2112+3,96);
-    
-    oxygen=game.add.group();
-    oxygen.enableBody=true;
-    makeTank(2144+14,544);
-    makeTank(1184+14,384);
-    
-    parts=game.add.group();
-    parts.enableBody=true;
-    makePart(864,150);
-    makePart(15,100);
-    makePart(2208,256);
-    
-    blocks=game.add.physicsGroup();
-    blocks.enableBody=true;
-    var block=blocks.create(350,game.world.height-96, 'block');
-    block=blocks.create(80,350, 'block');
-    blocks.forEach(addBounds, this);
-    
-    tool=game.add.sprite(2350,0, 'tool');
-    tool.scale.setTo(.07,.07);
-    game.physics.arcade.enable(tool);
-    tool.body.gravity.y=600;
-    tool.body.collideWorldBounds=true;
-    
-    scoreText=game.add.text(16,16, 'Bubbles Left: 10', {fontSize: '28px', fill:'#ffffff'});
-    scoreText.fixedToCamera=true;
-    partsText=game.add.text(268,16, 'Parts Left: 10', {fontSize: '28px', fill:'#ffffff'});
-    partsText.fixedToCamera=true;
-    oxygenText=game.add.text(488,16, 'Oxygen Level: '+oxygen_value+'%', {fontSize: '28px', fill:'#ffffff'});
-    oxygenText.fixedToCamera=true;
-    game.time.events.loop(Phaser.Timer.SECOND, decreaseOxygen, this);
-    
-    introText=game.add.text(50,100,"Your ship has crash landed on the newly discovered \nexoplanet MSP-1 leaving you the only survivor. The US \nCongress funded this mission to collect the valuable \nbubbles that Earth desperately needs found only on \nMSP-1. Collect ten bubbles to bring back to Earth \nbefore finding all three parts to repair your ship and \ncomplete your mission. \nBe careful, the oxygen supply is limited...\n\nPress the space bar to remove text.",{fontSize: '28px', fill:'#ffffff', align: 'center'});
-    introText.fixedToCamera=true;
-    
-    cursors=game.input.keyboard.createCursorKeys();
-    restart=game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR); 
-    
-    game.camera.follow(player);
-    
-}
-    
-function decreaseOxygen(){
-    if (oxygen_value>0&&partsLeft>0){
-        oxygen_value--;
-        oxygenText.text='Oxygen Level: '+oxygen_value+'%';
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 640,
+    parent: "game",
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
     }
 }
 
-function makeBubble(x,y){
-    var bubble=bubbles.create(x,y,'bubble');
-    bubble.scale.setTo(.1,.1);
-    bubble.body.gravity.y=-.01;
-    bubble.body.collideWorldBounds=true;
+var game = new Phaser.Game(config);
+
+function preload() {
+    this.load.tilemapTiledJSON('map', 'assets/map2.json');
+    this.load.image('tiles', 'assets/tiles/tiles.png');
+    this.load.image('bg', 'assets/background.jpg');
+    this.load.image('bubble', 'assets/bubble.png');
+    this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.image('block', 'assets/block.png');
+    this.load.audio('sfx', 'assets/sfx.wav');
+    this.load.audio('music', 'assets/music.wav');
+    this.load.audio('wind', 'assets/wind.wav');
+    this.load.image('oxygen', 'assets/oxygen.png');
+    this.load.image('parts', 'assets/parts.jpg');
+    this.load.image('tool', 'assets/tool.jpg');
+    // this.load.script('filterX', 'https://cdn.rawgit.com/photonstorm/phaser-ce/master/filters/BlurX.js');
+    // this.load.script('filterY', 'https://cdn.rawgit.com/photonstorm/phaser-ce/master/filters/BlurY.js');
+    // this.load.script('Gray', 'https://cdn.rawgit.com/photonstorm/phaser-ce/master/filters/Gray.js');
+}
+var player;
+
+function create() {
+    this.score = 10;
+    this.partsLeft = 3;
+    this.oxygenValue = 100;
+    this.hasTool = false;
+    // music = this.add.audio('music');
+    // music.play();
+    // wind = this.add.audio('wind');
+
+    // fx = this.add.audio('sfx');
+    // fx.allowMultiple = true;
+    // fx.addMarker('jump', 0, .32, .15);
+    // fx.addMarker('walk', .5, .7, .25);
+    // fx.addMarker('collect', 1.5, .2, 1);
+
+    this.background = this.add.sprite(0, 0, 'bg');
+    this.background.setScale(.5, .5);
+    this.background.setScrollFactor(0);
+
+    this.map = this.make.tilemap({ key: "map", tileWidth: 32, tileHeight: 32 })
+    const tileset = this.map.addTilesetImage("tiles");
+    this.layer = this.map.createStaticLayer('Tile Layer 1', tileset, 0, 0);
+    this.layer.setCollisionByExclusion([-1, 24, 29]);
+    this.physics.world.bounds.width = this.layer.width;
+    this.physics.world.bounds.height = this.layer.height;
+
+    // const debugGraphics = this.add.graphics().setAlpha(0.75);
+    // this.layer.renderDebug(debugGraphics, {
+    //     tileColor: null, // Color of non-colliding tiles
+    //     collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255), // Color of colliding tiles
+    //     faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
+    // });
+
+    // blurX = this.add.filter('BlurX');
+    // blurY = this.add.filter('BlurY');
+    // gray = this.add.filter('Gray');
+
+    player = new Player(this);
+    this.bubbles = new Bubbles(this, "prototype", player.player);
+    oxygen = new Oxygen(this, "prototype");
+    parts = new Parts(this, "prototype");
+    this.blocks = new Blocks(this, "prototype", player.player);
+
+    tool = this.physics.add.sprite(2350, 0, 'tool');
+    tool.setScale(.07, .07);
+    tool.body.setGravityY(600);
+    tool.body.collideWorldBounds = true;
+
+    this.scoreText = this.add.text(16, 16, 'Bubbles Left: 10', { fontSize: '24px', fill: '#ffffff' });
+    this.scoreText.setScrollFactor(0);
+    this.partsText = this.add.text(268, 16, 'Parts Left: 10', { fontSize: '24px', fill: '#ffffff' });
+    this.partsText.setScrollFactor(0);
+    this.oxygenText = this.add.text(488, 16, 'Oxygen Level: ' + this.oxygenValue + '%', { fontSize: '24px', fill: '#ffffff' });
+    this.oxygenText.setScrollFactor(0);
+    // this.time.events.loop(Phaser.Timer.SECOND, decreaseOxygen, this);
+
+    introText = this.add.text(0, 100, "Your ship has crash landed on the newly discovered\nexoplanet MSP-1 leaving you the only survivor. The US\nCongress funded this mission to collect the valuable\nbubbles that Earth desperately needs found only on\nMSP-1. Collect ten bubbles to bring back to Earth\nbefore finding all three parts to repair your ship and\ncomplete your mission.\nBe careful, the oxygen supply is limited...\n\nPress the space bar to remove text.", { fontSize: '24px', fill: '#ffffff', align: 'center' });
+    introText.fixedToCamera = true;
+
+    this.input.keyboard.on('keydown_RIGHT', function (event) {
+        player.player.setVelocityX(150);
+        player.player.anims.play('right', true);
+    });
+    this.input.keyboard.on('keyup_RIGHT', function (event) {
+        player.player.setVelocityX(0);
+        player.player.anims.stop();
+    });
+    this.input.keyboard.on('keydown_LEFT', function (event) {
+        player.player.setVelocityX(-150);
+        player.player.anims.play('left', true);
+    });
+    this.input.keyboard.on('keyup_LEFT', function (event) {
+        player.player.setVelocityX(0);
+        player.player.anims.stop();
+    });
+    this.input.keyboard.on('keydown_UP', function (event) {
+        if (player.player.body.blocked.down || player.player.body.touching.down) {
+            player.player.body.setGravityY(300);
+            player.player.setVelocityY(-500);
+        }
+    });
+    this.input.keyboard.on('keydown_DOWN', function (event) {
+        if (!player.player.body.blocked.down) {
+            player.player.body.setGravityY(600);
+        }
+    });
+    this.input.keyboard.on('keydown_SPACE', function (event) {
+        introText.visible = false;
+    });
+
+    this.cameras.main.startFollow(player.player);
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 }
 
-function makeTank(x,y){
-    var tank=oxygen.create(x,y,'oxygen');
-    tank.body.gravity.y=600;
-    tank.scale.setTo(.015,.015);
-}
-
-function makePart(x,y){
-    var part=parts.create(x,y,'parts');
-    part.body.gravity.y=600;
-    part.scale.setTo(.1,.1);
-}
-
-function addBounds(block){
-    block.body.collideWorldBounds=true;
-    block.body.gravity.y=600;
-}
-
-function collectBubble(player, bubble) {
-    bubble.kill();
-    fx.play('collect');
-    score-=1;
-    scoreText.text='Bubbles Left: '+score;
+function decreaseOxygen() {
+    if (oxygen_value > 0 && partsLeft > 0) {
+        oxygen_value--;
+        oxygenText.text = 'Oxygen Level: ' + oxygen_value + '%';
+    }
 }
 
 function collectPart(player, part) {
     part.kill();
-    partsLeft-=1;
-    partsText.text='Parts Left '+partsLeft;
+    partsLeft -= 1;
+    partsText.text = 'Parts Left ' + partsLeft;
 }
 
 function collectTank(player, tank) {
     tank.kill();
-    if (oxygen_value<90){
-        oxygen_value+=10;
+    if (oxygen_value < 90) {
+        oxygen_value += 10;
     }
     else {
-        oxygen_value=100;       
+        oxygen_value = 100;
     }
-    oxygenText.text='Oxygen Level: '+oxygen_value+'%';
+    oxygenText.text = 'Oxygen Level: ' + oxygen_value + '%';
 }
 
-function changeVelocity(block){
-    block.body.velocity.x=0;
-}
-
-function collectTool(player, tool){
+function collectTool(player, tool) {
     tool.kill();
-    hasTool=true;
+    hasTool = true;
 }
 
-function collisionTest(){
-    if (player.body.velocity.y<0){
+function collisionTest() {
+    if (this.player.body.velocity.y < 0) {
         return false;
     }
     return true;
 }
-function applyBlur(object){
-    object.filters=[blurX,blurY];
+function applyBlur(object) {
+    object.filters = [blurX, blurY];
 }
-function applyGray(object){
-    object.filters=[blurX,blurY,gray];
+function applyGray(object) {
+    object.filters = [blurX, blurY, gray];
 }
 
 function update() {
-    game.physics.arcade.collide(layer, player);
-    game.physics.arcade.collide(layer, blocks);
-    game.physics.arcade.collide(layer, bubbles);
-    game.physics.arcade.collide(layer, oxygen);
-    game.physics.arcade.collide(layer, parts);
-    game.physics.arcade.collide(layer, tool);
-    game.physics.arcade.collide(player,blocks);
-    game.physics.arcade.collide(blocks,blocks);
-    game.physics.arcade.overlap(player, bubbles, collectBubble, null, this);
-    game.physics.arcade.overlap(player, oxygen, collectTank, null, this);
-    game.physics.arcade.overlap(player, parts, collectPart, null, this);
-    game.physics.arcade.overlap(player, tool, collectTool, null, this);
-    player.body.velocity.x=0;
-    blocks.forEach(changeVelocity, this);
-    if (oxygen_value<70){
-        background.filters=[blurX,blurY];
+    this.blocks.group.children.iterate(function (child) {
+        child.setVelocityX(0);
+    });
+    /*
+    this.physics.arcade.overlap(player, oxygen, collectTank, null, this);
+    this.physics.arcade.overlap(player, parts, collectPart, null, this);
+    this.physics.arcade.overlap(player, tool, collectTool, null, this);
+    if (oxygen_value < 70) {
+        background.filters = [blurX, blurY];
     }
-    if (oxygen_value<60){
-        layer.filters=[blurX,blurY];
+    if (oxygen_value < 60) {
+        layer.filters = [blurX, blurY];
     }
-    if (oxygen_value<50){
-        blocks.forEach(applyBlur,this);
-        parts.forEach(applyBlur,this);
-        oxygen.forEach(applyBlur,this);
-        tool.filters=[blurX,blurY];
+    if (oxygen_value < 50) {
+        blocks.forEach(applyBlur, this);
+        parts.forEach(applyBlur, this);
+        oxygen.forEach(applyBlur, this);
+        tool.filters = [blurX, blurY];
     }
-    if (oxygen_value<40){
-        bubbles.forEach(applyBlur,this);
+    if (oxygen_value < 40) {
+        bubbles.forEach(applyBlur, this);
     }
-    if (oxygen_value<30){
-        player.filters=[blurX,blurY];
+    if (oxygen_value < 30) {
+        player.filters = [blurX, blurY];
     }
-    if (oxygen_value<20){
-        background.filters=[blurX,blurY,gray];
+    if (oxygen_value < 20) {
+        background.filters = [blurX, blurY, gray];
     }
-    if (oxygen_value<10){
-        layer.filters=[blurX,blurY,gray];
+    if (oxygen_value < 10) {
+        layer.filters = [blurX, blurY, gray];
         blocks.forEach(applyGray, this);
         parts.forEach(applyGray, this);
         oxygen.forEach(applyGray, this);
         bubbles.forEach(applyGray, this);
-        tool.filters=[blurX,blurY,gray];
-        player.filters=[blurX,blurY,gray];
+        tool.filters = [blurX, blurY, gray];
+        player.filters = [blurX, blurY, gray];
     }
-    if(!wind.isPlaying){
-        wind.restart('',0,.2);
+    if (!wind.isPlaying) {
+        wind.restart('', 0, .2);
     }
-    if (oxygen_value>0){
-        if (partsLeft>0){
-            if (hasTool==true){
-                map.setCollision(12, collides=false);
+    
+    if (oxygen_value > 0) {
+        if (partsLeft > 0) {
+            if (hasTool == true) {
+                map.setCollision(12, collides = false);
             }
-            if (restart.isDown) {
-                introText.visible=false;
-                var first=blocks.getTop();
-                var second=blocks.getBottom();
-                first.body.x=80;
-                first.body.y=350;
-                second.body.x=350;
-                second.body.y=game.world.height-96;
-                player.body.x=32;
-                player.body.y=game.world.height-150;
-            }
-            if (cursors.left.isDown) {
-                player.body.velocity.x=-150;
-                player.animations.play('left');
-            }
-            else if (cursors.right.isDown) {
-                player.body.velocity.x=150;
-                player.animations.play('right');
-            }
-            else {
-                player.animations.stop();
-                player.frame=1;
-            }
-            if (player.body.velocity.x!=0&&player.body.onFloor()&&(!fx.isPlaying)){
+            if (this.player.body.velocity.x != 0 && this.player.body.onFloor() && (!fx.isPlaying)) {
                 fx.play('walk');
             }
-            if (cursors.up.isDown && (player.body.onFloor()||player.body.touching.down||score<4)) {
+            if (this.cursors.up.isDown && (this.player.body.onFloor() || this.player.body.touching.down || score < 4)) {
                 fx.pause('walk');
-                if (score>3){
+                if (score > 3) {
                     fx.play('jump');
                 }
-                player.body.gravity.y=300;
-                player.body.velocity.y=-300;
-            }
-            if (cursors.down.isDown &&(!player.body.onFloor()||player.body.touching.down)) {
-                player.body.gravity.y=600;
             }
         }
-        else if (partsLeft==0&&score>0){
-            introText.text="You have repaired your ship but failed to get \nenough bubbles to complete your mission. You return to \nEarth without the bubbles and without \nyour crew and are seen as a failure.";
-            introText.visible=true;
+        else if (partsLeft == 0 && score > 0) {
+            introText.text = "You have repaired your ship but failed to get \nenough bubbles to complete your mission. You return to \nEarth without the bubbles and without \nyour crew and are seen as a failure.";
+            introText.visible = true;
         }
-        else if (partsLeft==0&&score==0){
-            introText.text="Congratulations!\nYou have repaired your ship and completed your mission.\nYou are welcomed back to Earth a hero.";
-            introText.visible=true;
+        else if (partsLeft == 0 && score == 0) {
+            introText.text = "Congratulations!\nYou have repaired your ship and completed your mission.\nYou are welcomed back to Earth a hero.";
+            introText.visible = true;
         }
     }
-    else{
-        introText.text="You have run out of oxygen \nand died on this lifeless planet.\nMission Failed.";
-        introText.visible=true;
+    else {
+        introText.text = "You have run out of oxygen \nand died on this lifeless planet.\nMission Failed.";
+        introText.visible = true;
     }
+    */
 }
