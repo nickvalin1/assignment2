@@ -6,9 +6,10 @@ class Bubbles {
         for (var i = 0; i < coordinates.length; i++) {
             this.bubbles.push(this.makeBubble(coordinates[i].x, coordinates[i].y));
         }
+        this.text = game.add.text(16, 16, 'Bubbles Left: 10', { fontSize: '24px', fill: '#ffffff' });
+        this.text.setScrollFactor(0);
         game.physics.add.collider(this.group, game.layer);
-        game.physics.add.overlap(player, this.group, this.collectBubble, null, this);
-
+        game.physics.add.overlap(player, this.group, this.collect, null, this);
     }
 
     makeBubble(x, y) {
@@ -19,11 +20,10 @@ class Bubbles {
         return bubble;
     }
 
-    collectBubble(player, bubble) {
-        bubble.destroy();
+    collect(player, bubble) {
+        this.group.remove(bubble, true, true);
         // fx.play('collect');
-        game.score -= 1;
-        game.scoreText.text = 'Bubbles Left: ' + game.score;
+        this.text.text = 'Bubbles Left: ' + this.group.countActive();
     }
 
     static get levels() {

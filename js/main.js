@@ -37,12 +37,10 @@ function preload() {
     // this.load.script('Gray', 'https://cdn.rawgit.com/photonstorm/phaser-ce/master/filters/Gray.js');
 }
 var player;
+var intoText;
+var hasTool = false;
 
 function create() {
-    this.score = 10;
-    this.partsLeft = 3;
-    this.oxygenValue = 100;
-    this.hasTool = false;
     // music = this.add.audio('music');
     // music.play();
     // wind = this.add.audio('wind');
@@ -77,22 +75,16 @@ function create() {
 
     player = new Player(this);
     this.bubbles = new Bubbles(this, "prototype", player.player);
-    oxygen = new Oxygen(this, "prototype");
-    parts = new Parts(this, "prototype");
+    this.oxygen = new Oxygen(this, "prototype", player.player);
+    this.parts = new Parts(this, "prototype", player.player);
     this.blocks = new Blocks(this, "prototype", player.player);
 
     tool = this.physics.add.sprite(2350, 0, 'tool');
     tool.setScale(.07, .07);
     tool.body.setGravityY(600);
     tool.body.collideWorldBounds = true;
-
-    this.scoreText = this.add.text(16, 16, 'Bubbles Left: 10', { fontSize: '24px', fill: '#ffffff' });
-    this.scoreText.setScrollFactor(0);
-    this.partsText = this.add.text(268, 16, 'Parts Left: 10', { fontSize: '24px', fill: '#ffffff' });
-    this.partsText.setScrollFactor(0);
-    this.oxygenText = this.add.text(488, 16, 'Oxygen Level: ' + this.oxygenValue + '%', { fontSize: '24px', fill: '#ffffff' });
-    this.oxygenText.setScrollFactor(0);
-    // this.time.events.loop(Phaser.Timer.SECOND, decreaseOxygen, this);
+    this.physics.add.collider(this.layer, tool);
+    this.physics.add.overlap(player.player, tool, collectTool, null, this);
 
     introText = this.add.text(0, 100, "Your ship has crash landed on the newly discovered\nexoplanet MSP-1 leaving you the only survivor. The US\nCongress funded this mission to collect the valuable\nbubbles that Earth desperately needs found only on\nMSP-1. Collect ten bubbles to bring back to Earth\nbefore finding all three parts to repair your ship and\ncomplete your mission.\nBe careful, the oxygen supply is limited...\n\nPress the space bar to remove text.", { fontSize: '24px', fill: '#ffffff', align: 'center' });
     introText.fixedToCamera = true;
@@ -114,7 +106,7 @@ function create() {
         player.player.anims.stop();
     });
     this.input.keyboard.on('keydown_UP', function (event) {
-        if (player.player.body.blocked.down || player.player.body.touching.down) {
+        if (player.player.body.blocked.down || player.player.body.touching.down || hasTool) {
             player.player.body.setGravityY(300);
             player.player.setVelocityY(-500);
         }
@@ -132,41 +124,12 @@ function create() {
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 }
 
-function decreaseOxygen() {
-    if (oxygen_value > 0 && partsLeft > 0) {
-        oxygen_value--;
-        oxygenText.text = 'Oxygen Level: ' + oxygen_value + '%';
-    }
-}
-
-function collectPart(player, part) {
-    part.kill();
-    partsLeft -= 1;
-    partsText.text = 'Parts Left ' + partsLeft;
-}
-
-function collectTank(player, tank) {
-    tank.kill();
-    if (oxygen_value < 90) {
-        oxygen_value += 10;
-    }
-    else {
-        oxygen_value = 100;
-    }
-    oxygenText.text = 'Oxygen Level: ' + oxygen_value + '%';
-}
-
 function collectTool(player, tool) {
-    tool.kill();
+    tool.destroy();
+    this.layer.setCollision(12, collides = false);
     hasTool = true;
 }
 
-function collisionTest() {
-    if (this.player.body.velocity.y < 0) {
-        return false;
-    }
-    return true;
-}
 function applyBlur(object) {
     object.filters = [blurX, blurY];
 }
@@ -175,13 +138,30 @@ function applyGray(object) {
 }
 
 function update() {
+
     this.blocks.group.children.iterate(function (child) {
         child.setVelocityX(0);
     });
+
+    if (this.oxygen.o2Level <= 0) {
+        this.oxygen.timer.paused = true;
+        introText.text = "You have run out of oxygen \nand died on this lifeless planet.\nMission Failed.";
+        introText.setScrollFactor(0);
+        introText.visible = true;
+    }
+
+    if (this.parts.group.countActive() == 0) {
+        this.oxygen.timer.paused = true;
+        introText.setScrollFactor(0);
+        if (this.bubbles.group.countActive() > 0) {
+            introText.text = "You have repaired your ship but failed to get \nenough bubbles to complete your mission. You return to \nEarth without the bubbles and without \nyour crew and are seen as a failure.";
+        }
+        else {
+            introText.text = "Congratulations!\nYou have repaired your ship and completed your mission.\nYou are welcomed back to Earth a hero.";
+        }
+        introText.visible = true;
+    }
     /*
-    this.physics.arcade.overlap(player, oxygen, collectTank, null, this);
-    this.physics.arcade.overlap(player, parts, collectPart, null, this);
-    this.physics.arcade.overlap(player, tool, collectTool, null, this);
     if (oxygen_value < 70) {
         background.filters = [blurX, blurY];
     }
@@ -218,9 +198,6 @@ function update() {
     
     if (oxygen_value > 0) {
         if (partsLeft > 0) {
-            if (hasTool == true) {
-                map.setCollision(12, collides = false);
-            }
             if (this.player.body.velocity.x != 0 && this.player.body.onFloor() && (!fx.isPlaying)) {
                 fx.play('walk');
             }
@@ -231,18 +208,6 @@ function update() {
                 }
             }
         }
-        else if (partsLeft == 0 && score > 0) {
-            introText.text = "You have repaired your ship but failed to get \nenough bubbles to complete your mission. You return to \nEarth without the bubbles and without \nyour crew and are seen as a failure.";
-            introText.visible = true;
-        }
-        else if (partsLeft == 0 && score == 0) {
-            introText.text = "Congratulations!\nYou have repaired your ship and completed your mission.\nYou are welcomed back to Earth a hero.";
-            introText.visible = true;
-        }
-    }
-    else {
-        introText.text = "You have run out of oxygen \nand died on this lifeless planet.\nMission Failed.";
-        introText.visible = true;
     }
     */
 }
