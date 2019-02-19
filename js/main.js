@@ -41,15 +41,34 @@ var intoText;
 var hasTool = false;
 
 function create() {
-    // music = this.add.audio('music');
+    music = this.sound.add('music', { loop: true });
     // music.play();
-    // wind = this.add.audio('wind');
+    wind = this.sound.add('wind', { loop: true, volume: .2 });
+    // wind.play();
 
-    // fx = this.add.audio('sfx');
-    // fx.allowMultiple = true;
-    // fx.addMarker('jump', 0, .32, .15);
-    // fx.addMarker('walk', .5, .7, .25);
-    // fx.addMarker('collect', 1.5, .2, 1);
+    fx = this.sound.add('sfx');
+    fx.addMarker({
+        name: 'jump',
+        start: 0,
+        duration: .32,
+        config: {
+            volume: .15
+        }
+    });
+    fx.addMarker({
+        name: 'walk',
+        start: .5,
+        duration: .7,
+        config: {
+            volume: .25,
+            loop: true
+        }
+    });
+    fx.addMarker({
+        name: 'collect',
+        start: 1.5,
+        duration: .2
+    });
 
     this.background = this.add.sprite(0, 0, 'bg');
     this.background.setScale(.5, .5);
@@ -69,12 +88,12 @@ function create() {
     //     faceColor: new Phaser.Display.Color(40, 39, 37, 255) // Color of colliding face edges
     // });
 
-    // blurX = this.add.filter('BlurX');
-    // blurY = this.add.filter('BlurY');
-    // gray = this.add.filter('Gray');
+    this.grayscalePipeline = this.game.renderer.addPipeline('Grayscale', new GrayscalePipeline(this.game));
+    // this.distortionPipeline = this.game.renderer.addPipeline('Distortion', new DistortionPipeline(this.game));
+    // this.distortionPipeline = this.game.renderer.addPipeline("Light2D")
 
     player = new Player(this);
-    this.bubbles = new Bubbles(this, "prototype", player.player);
+    this.bubbles = new Bubbles(this, "prototype", player.player, fx);
     this.oxygen = new Oxygen(this, "prototype", player.player);
     this.parts = new Parts(this, "prototype", player.player);
     this.blocks = new Blocks(this, "prototype", player.player);
@@ -92,23 +111,32 @@ function create() {
     this.input.keyboard.on('keydown_RIGHT', function (event) {
         player.player.setVelocityX(150);
         player.player.anims.play('right', true);
+        if (!fx.isPlaying && (player.player.body.blocked.down || player.player.body.touching.down)) {
+            fx.play("walk");
+        }
     });
     this.input.keyboard.on('keyup_RIGHT', function (event) {
         player.player.setVelocityX(0);
         player.player.anims.stop();
+        fx.stop();
     });
     this.input.keyboard.on('keydown_LEFT', function (event) {
         player.player.setVelocityX(-150);
         player.player.anims.play('left', true);
+        if (!fx.isPlaying && (player.player.body.blocked.down || player.player.body.touching.down)) {
+            fx.play("walk");
+        }
     });
     this.input.keyboard.on('keyup_LEFT', function (event) {
         player.player.setVelocityX(0);
         player.player.anims.stop();
+        fx.stop();
     });
     this.input.keyboard.on('keydown_UP', function (event) {
         if (player.player.body.blocked.down || player.player.body.touching.down || hasTool) {
             player.player.body.setGravityY(300);
             player.player.setVelocityY(-500);
+            fx.play("jump");
         }
     });
     this.input.keyboard.on('keydown_DOWN', function (event) {
@@ -130,19 +158,21 @@ function collectTool(player, tool) {
     hasTool = true;
 }
 
-function applyBlur(object) {
-    object.filters = [blurX, blurY];
-}
-function applyGray(object) {
-    object.filters = [blurX, blurY, gray];
-}
-
 function update() {
 
     this.blocks.group.children.iterate(function (child) {
         child.setVelocityX(0);
     });
 
+    if (this.oxygen.o2Level <= 90) {
+        // this.cameras.main.setRenderToTexture(this.distortionPipeline);
+        fade = new Phaser.Cameras.Scene2D.Effects.Fade(this.cameras.main);
+        fade.start();
+        console.log(fade.isRunning);
+    }
+    if (this.oxygen.o2Level <= 80) {
+        this.cameras.main.setRenderToTexture(this.grayscalePipeline);
+    }
     if (this.oxygen.o2Level <= 0) {
         this.oxygen.timer.paused = true;
         introText.text = "You have run out of oxygen \nand died on this lifeless planet.\nMission Failed.";
@@ -191,23 +221,6 @@ function update() {
         bubbles.forEach(applyGray, this);
         tool.filters = [blurX, blurY, gray];
         player.filters = [blurX, blurY, gray];
-    }
-    if (!wind.isPlaying) {
-        wind.restart('', 0, .2);
-    }
-    
-    if (oxygen_value > 0) {
-        if (partsLeft > 0) {
-            if (this.player.body.velocity.x != 0 && this.player.body.onFloor() && (!fx.isPlaying)) {
-                fx.play('walk');
-            }
-            if (this.cursors.up.isDown && (this.player.body.onFloor() || this.player.body.touching.down || score < 4)) {
-                fx.pause('walk');
-                if (score > 3) {
-                    fx.play('jump');
-                }
-            }
-        }
     }
     */
 }

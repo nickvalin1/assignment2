@@ -1,7 +1,8 @@
 class Bubbles {
-    constructor(game, level, player) {
+    constructor(game, level, player, fx) {
         this.group = game.physics.add.group();
         this.bubbles = [];
+        this.fx = fx;
         var coordinates = Bubbles.levels[level];
         for (var i = 0; i < coordinates.length; i++) {
             this.bubbles.push(this.makeBubble(coordinates[i].x, coordinates[i].y));
@@ -22,7 +23,7 @@ class Bubbles {
 
     collect(player, bubble) {
         this.group.remove(bubble, true, true);
-        // fx.play('collect');
+        this.fx.play('collect');
         this.text.text = 'Bubbles Left: ' + this.group.countActive();
     }
 
